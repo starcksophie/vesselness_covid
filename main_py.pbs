@@ -1,0 +1,11 @@
+#!/bin/bash
+
+
+cd /home/lemaire/Desktop/vesselness_covid
+
+lol="conda init bash" 
+instruction="conda activate pfee;python3 main.py ./patient8/VESSEL12_08.nii ./patient8/mask_08.nii ./patient8/result_08.nii"
+
+echo $instruction
+$lol
+$instruction
