@@ -1,5 +1,5 @@
 #!/bin/sh
-#PBS -l walltime=00:30:00
+#PBS -l walltime=03:00:00
 #PBS -N script_vessel
 #PBS -l nodes=1:ppn=7
 #PBS -l mem=30gb
