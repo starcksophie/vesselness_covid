@@ -1,11 +1,20 @@
-#!/bin/bash
+#!/bin/sh
+#PBS -l walltime=00:30:00
+#PBS -N script_vessel
+#PBS -l nodes=1:ppn=7
+#PBS -l mem=30gb
+#PBS -o ./script_out/RORPO_covid.out
+#PBS -e ./script_out/RORPO_covid.err
+cd $PBS_O_WORKDIR
 
 
 cd /home/lemaire/Desktop/vesselness_covid
 
-lol="conda init bash" 
-instruction="conda activate pfee;python3 main.py ./patient8/VESSEL12_08.nii ./patient8/mask_08.nii ./patient8/result_08.nii"
+env="pipenv shell"
+instruction="python3 main.py ./patient8/VESSEL12_08.nii ./patient8/mask_08.nii ./patient8/result_08.nii"
+end="exit"
 
 echo $instruction
-$lol
-$instruction
+$env
+pipenv run $instruction
+$end
