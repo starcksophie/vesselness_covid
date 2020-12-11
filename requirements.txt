@@ -1,4 +1,7 @@
 matplotlib
-skimage
+scikit-image
+numpy
+opencv-python
+tqdm
 itk
 nibabel
