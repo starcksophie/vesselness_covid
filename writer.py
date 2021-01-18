@@ -2,7 +2,7 @@ import json
 import analytics
 
 def write_result():
-    json_f = json.dumbs(analytics.result, indent = 4)
+    json_f = json.dumps(analytics.result, indent = 4)
     # si on recupere que stdout
     print(json_f)
     # si on peut recuperer un fichier

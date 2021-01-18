@@ -28,10 +28,9 @@ def distance(seg, verbose=False):
 
 
 def label_value(dist):
-    label_map = label(dist)
+    label_map, label_nbr = label(dist)
     label_map = label_map.flatten()
     flat_dist = dist.flatten()
-    label_nbr = max(label_map)
     dist_per_label = np.array([np.array([
         flat_dist[i]  for i in range(len(flat_dist)) if label_map[i] == n ])
                         for n in range(1, label_nbr)])
@@ -45,6 +44,7 @@ def label_value(dist):
     result["mean_all_vessel"] = mean_
     result["max_all_vessel"] = max_
     result["min_all_vessel"] = min_
+    result["component_count"] = label_nbr
     return mean_, max_
     
 #def skeleton_dist(skeleton):
