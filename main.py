@@ -58,7 +58,7 @@ def main(filepath, maskpath, rorpo_out=None):
         else:
             seg_2d[i] = np.zeros((gray.shape))
     
-    analytics.get_analytics(seg, verbose=True)
+    analytics.get_analytics(seg, img_mask, verbose=True)
     distance_map, skeleton = analytics.distance(seg)
     analytics.label_value(distance_map)
 
