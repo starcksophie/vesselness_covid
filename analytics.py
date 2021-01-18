@@ -28,7 +28,7 @@ def distance(seg, verbose=False):
 
 
 def label_value(dist):
-    label_map, label_nbr = label(dist)
+    label_map, label_nbr = label(dist, return_num=True)
     label_map = label_map.flatten()
     flat_dist = dist.flatten()
     dist_per_label = np.array([np.array([
