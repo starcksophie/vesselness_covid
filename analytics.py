@@ -31,31 +31,40 @@ def distance(seg, verbose=False):
 def label_value(dist):
     label_map, label_nbr = label(dist, return_num=True)
     print(label_nbr, flush=True)
-    dist_size = int(len(label_map) / 4)
+    dist_size = int(len(label_map.flatten()) / 100000)
     print(dist_size, flush=True)
-    label_map = label_map.flatten()[dist_size:]
-    flat_dist = dist.flatten()[dist_size:]
+    label_map = label_map.flatten()
+    dist = dist.flatten()
     #dist_per_label = np.array([np.array([
     #    flat_dist[i]  for i in range(len(flat_dist)) if label_map[i] == n ])
     #                    for n in range(1, label_nbr)])
-    dist_per_label = np.array([np.where(label_map == n, 
-        label_map, flat_dist) for n in range(1, label_nbr )]) 
+    dist_per_label = np.array([np.array([]) for i in range(label_nbr)]);
+    for i in range(dist_size):
+        label_map_i = label_map[i:i + dist_size]
+        flat_dist_i = dist[i : i + dist_size]
+        print("plop" , np.unique(label_map_i))
+        for k in np.unique(label_map_i): 
+            k = int(k)
+            if k == 0:
+                continue
+            sub =  np.where(label_map_i == k, label_map_i, flat_dist_i)
+            dist_per_label[k] = np.concatenate((dist_per_label[k], sub)) 
     print("after the for in label_value\n", flush=True)
     #mean_ = [a.mean() for a in dist_per_label]
-    f_mean : lambda x : x.mean();
+    f_mean = lambda x : x.mean() if x else None;
     mean_ = f_mean(dist_per_label);
     print("mean", flush=True)
-    f_max = lambda x : x.max();
+    f_max = lambda x : x.max() if x else None;
     max_ = f_max(dist_per_label);
     #max_ = [a.max() for a in dist_per_label]
-    f_min = lambda x : x.min();
+    f_min = lambda x : x.min() if x else None;
     min_ = f_min(dist_per_label);
     #min_ = [a.min() for a in dist_per_label]
     print("max min", flush=True)
-    result["mean_mean_all_vessel"] = mean_.mean()
-    result["std_deviation"] = np.std(mean_)
-    result["max_max_all_vessel"] = max_.max()
-    result["mean_max_all_vessel"] = max_.mean()
+    result["mean_mean_all_vessel"] = mean_.mean() if mean_ else None
+    result["std_deviation"] = np.std(mean_) if mean_ else None
+    result["max_max_all_vessel"] = max_.max() if max_ else None
+    result["mean_max_all_vessel"] = max_.mean() if max_ else None
     result["mean_all_vessel"] = mean_
     print("most computations are done\n", flush=True)
     result["max_all_vessel"] = max_
