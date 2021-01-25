@@ -19,7 +19,7 @@ def normalize(im):
     return 255*(im - im.mean())/im.max()
 
 def apply_mask(image, mask):
-    return image * mask
+    # return image * mask
     expanded = np.stack((mask, mask, mask), axis=3)
     return image*expanded
 
@@ -44,9 +44,9 @@ def main(filepath, maskpath, rorpo_out=None):
     seg_2d = np.zeros((seg.shape[0:3]))
 
     # for i, slice in tqdm(enumerate(seg)):
-    for i, slice in enumerate(seg):
-        #gray = rgb2gray(slice)
-        gray = slice
+    for i, s in enumerate(seg):
+        gray = rgb2gray(s)
+        # gray = slice
         # Otsu raises ValueError if single grayscale value.
         if len(np.unique(gray)) > 1:
             ots =  threshold_otsu(gray)
@@ -59,7 +59,7 @@ def main(filepath, maskpath, rorpo_out=None):
             seg_2d[i] = np.zeros((gray.shape))
     
     analytics.get_analytics(seg, img_mask, verbose=True)
-    distance_map, skeleton = analytics.distance(seg)
+    distance_map = analytics.distance(seg_2d)
     analytics.label_value(distance_map)
 
 

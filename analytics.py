@@ -14,14 +14,15 @@ def get_analytics(img, mask, verbose=False):
         print('Number of voxel containing vessles: ', numvox)
 
 def distance(seg, verbose=False):
-    # compute distance map
+    #  compute distance map
     if verbose:
         print("computing distance map...")
-    distance_map = seg
-    skeleton = deepcopy(distance_map)
-    for i, slice in enumerate(distance_map):
-        distance_map[i] = ndi.distance_transform_edt(seg[i])
+    # distance_map = seg
+    # skeleton = deepcopy(distance_map)
+    # for i, slice in enumerate(distance_map):
+    #     distance_map[i] = ndi.distance_transform_edt(seg[i])
         #skeleton[i] = skeletonize(seg[i])
+    distance_map = ndi.distance_transform_edt(seg)
     if verbose:
         plt.imshow(distance_map[185])
     return distance_map, skeleton
