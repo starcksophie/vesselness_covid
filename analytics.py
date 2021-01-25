@@ -25,24 +25,38 @@ def distance(seg, verbose=False):
     distance_map = ndi.distance_transform_edt(seg)
     if verbose:
         plt.imshow(distance_map[185])
-    return distance_map, skeleton
+    return distance_map 
 
 
 def label_value(dist):
     label_map, label_nbr = label(dist, return_num=True)
-    label_map = label_map.flatten()
-    flat_dist = dist.flatten()
-    dist_per_label = np.array([np.array([
-        flat_dist[i]  for i in range(len(flat_dist)) if label_map[i] == n ])
-                        for n in range(1, label_nbr)])
-    mean_ = [a.mean() for a in dist_per_label]
-    max_ = [a.max() for a in dist_per_label]
-    min_ = [a.min() for a in dist_per_label]
+    print(label_nbr, flush=True)
+    label_nbr = int(label_nbr / 4)
+    label_map = label_map.flatten()[label_nbr:]
+    flat_dist = dist.flatten()[label_nbr:]
+    #dist_per_label = np.array([np.array([
+    #    flat_dist[i]  for i in range(len(flat_dist)) if label_map[i] == n ])
+    #                    for n in range(1, label_nbr)])
+    dist_per_label = np.array([np.where(label_map == n, 
+        label_map, flat_dist) for n in range(1, label_nbr )]) 
+    print("after the for in label_value\n", flush=True)
+    #mean_ = [a.mean() for a in dist_per_label]
+    f_mean : lambda x : x.mean();
+    mean_ = f_mean(dist_per_label);
+    print("mean", flush=True)
+    f_max = lambda x : x.max();
+    max_ = f_max(dist_per_label);
+    #max_ = [a.max() for a in dist_per_label]
+    f_min = lambda x : x.min();
+    min_ = f_min(dist_per_label);
+    #min_ = [a.min() for a in dist_per_label]
+    print("max min", flush=True)
     result["mean_mean_all_vessel"] = mean_.mean()
     result["std_deviation"] = np.std(mean_)
     result["max_max_all_vessel"] = max_.max()
     result["mean_max_all_vessel"] = max_.mean()
     result["mean_all_vessel"] = mean_
+    print("most computations are done\n", flush=True)
     result["max_all_vessel"] = max_
     result["min_all_vessel"] = min_
     result["component_count"] = label_nbr
