@@ -48,22 +48,18 @@ def main(filepath, maskpath, rorpo_out=None):
     # for i, slice in tqdm(enumerate(seg)):
     for i, s in enumerate(seg):
         gray = rgb2gray(s)
-        # gray = slice
         # Otsu raises ValueError if single grayscale value.
         if len(np.unique(gray)) > 1:
             ots =  threshold_otsu(gray)
-            # print(f"shape: {gray.shape}, thresh: {ots}, i = {i}\n")
-            # plt.imshow(gray)
-            # plt.show()
             seg_2d[i] = (gray > ots).astype(int)
             seg_2d[i] *= morpho.erosion(img_mask[i], morpho.disk(2))
         else:
             seg_2d[i] = np.zeros((gray.shape))
     print("End of slice processing\n", flush=True) 
     analytics.get_analytics(seg, img_mask, verbose=True)
-    print("got analytics\n", flush=True) 
+    print("got analytics\n", flush=True)
     distance_map = analytics.distance(seg_2d)
-    print("distance\n", flush=True) 
+    print("distance\n", flush=True)
     analytics.label_value(distance_map)
     print("label_value\n", flush=True) 
 
