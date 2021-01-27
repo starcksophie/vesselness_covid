@@ -15,56 +15,64 @@ from skimage.color import label2rgb, rgb2gray
 from skimage.filters import threshold_otsu
 from scipy import ndimage as ndi
 
-def normalize(im):
-    return 255*(im - im.mean())/im.max()
-
 def apply_mask(image, mask):
+    """
+    image: numpy.ndarray : segmented array.
+    mask: numpy.ndarray : mask array of the associated img.
+
+    return: numpy.ndarray: the masked image.
+    """
     return image * mask
-    expanded = np.stack((mask, mask, mask), axis=3)
-    return image*expanded
 
-def main(filepath, maskpath, rorpo_out=None):
-    analytics.result = {}
-    img_mask = nib.load(maskpath).get_fdata()
-    print("loading\n", flush=True)
-    # segmentation
-    if rorpo_out is not None:
-        print("loading segmentation...\n", flush=True)
-        seg = nib.load(rorpo_out).get_fdata()
-    else:
-        print("loading data..\n", flush=True)
-        img = nib.load(filepath).get_fdata()
-        # preprocessing
-        print("normalizing...\n", flush=True)
+def binarize(seg, img_mask):
+    """
+    Binarizes an image.
+    seg: numpy.ndarray : segmented array.
+    img_mask: numpy.ndarray : mask array of the associated img.
 
-        for i, slice in enumerate(img):
-            img[i] = normalize(slice)
-        #FIXME: exec rorpo 
-    # post processing
-    print("applying some post processing...\n", flush=True)
-    seg = apply_mask(seg, img_mask)
+    return: numpy.ndarray : binarized image. 
+    """
     seg_2d = np.zeros((seg.shape[0:3]))
-    print("end of first steps\n", flush=True)
-    # for i, slice in tqdm(enumerate(seg)):
     for i, s in enumerate(seg):
         gray = rgb2gray(s)
         # Otsu raises ValueError if single grayscale value.
         if len(np.unique(gray)) > 1:
             ots =  threshold_otsu(gray)
             seg_2d[i] = (gray > ots).astype(int)
+            # remove borders
             seg_2d[i] *= morpho.erosion(img_mask[i], morpho.disk(2))
         else:
             seg_2d[i] = np.zeros((gray.shape))
+    return seg_2d
+
+def main(filepath, maskpath):
+    """
+    This program computes relevant metrics on intralung vessels. 
+
+    filepath: string: path to segmentated lungs with rorpo (nifti format)
+    maskpath: string: path to mask to these lungs
+
+    """
+    analytics.result = {}
+    img_mask = nib.load(maskpath).get_fdata()
+    print("loading\n", flush=True)
+    # segmentation
+    print("loading segmentation...\n", flush=True)
+    seg = nib.load(filepath).get_fdata()
+    # post processing
+    print("applying some post processing...\n", flush=True)
+    seg = apply_mask(seg, img_mask)
+    seg_2d = binarize(seg, img_mask)
     print("End of slice processing\n", flush=True) 
-    analytics.get_analytics(seg, img_mask, verbose=True)
-    print("got analytics\n", flush=True)
     distance_map = analytics.distance(seg_2d)
     print("distance\n", flush=True)
-    analytics.label_value(distance_map)
+    dist_per_label = analytics.label_value(distance_map)
     print("label_value\n", flush=True) 
+    analytics.get_analytics(seg, img_mask, dist_per_label, verbose=True)
+    print("got analytics\n", flush=True)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], sys.argv[3])
+    main(sys.argv[1], sys.argv[2])
     print("Did everything but write the json\n", flush=True)
-    writer.write_result()
+    writer.write_result(sys.argv[3])

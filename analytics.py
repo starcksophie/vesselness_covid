@@ -6,54 +6,88 @@ from skimage.morphology import skeletonize
 
 global result
 
-def get_analytics(img, mask, verbose=False):
+def distance(seg, verbose=False):
+    """
+    Computes the distance map of a segmentation.
+    
+    seg: numpy.ndarray : segmented array
+    verbose: bool : display log option.
+
+    return: numpy.ndarray : a distance map.
+    """
+    #  compute distance map
+    if verbose:
+        print("computing distance map...")
+    distance_map = ndi.distance_transform_edt(seg)
+    if verbose:
+        plt.imshow(distance_map[185])
+    return distance_map
+
+def label_value(dist):
+    """
+        Aggregates distances for each label.
+
+        dist: numpy.ndarray : distance map of the vessel segmentation.
+
+        return: numpy.ndarray : all the distances for each label.
+    """
+    label_map, label_nbr = label(dist, return_num=True)
+
+    result["component_count"] = label_nbr
+
+    print(label_nbr, flush=True)
+    label_map = label_map.flatten()
+    dist_size = int(len(label_map) / 1000)
+    print("dist_size", dist_size)
+
+    dist = dist.flatten()
+    dist_per_label = [[] for i in range(label_nbr+1)];
+    for i in range(0, len(label_map)-dist_size, dist_size):
+        label_map_i = label_map[i:i + dist_size]
+        flat_dist_i = dist[i : i + dist_size]
+        for k in np.unique(label_map_i): 
+            k = int(k)
+            if k == 0: # not a valid label
+                continue
+            sub =  np.where(label_map_i == k, flat_dist_i, label_map_i)
+            dist_per_label[k] += list(sub) # append labels to list 
+
+    dist_per_label = np.array([np.array(x, dtype=np.float64) for x in dist_per_label], dtype=object)
+    print(dist_per_label[-1], "\n")
+    print("after the for in label_value\n", flush=True)
+    return dist_per_label
+
+
+def get_analytics(img, mask, dist_per_label, verbose=False):
+    """
+        Computes the metrics on all the labels, and fills the result array.
+
+        img: numpy.ndarray : segmented array.
+        mask: numpy.ndarray : mask array of the associated img.
+        dist_per_label: numpy.ndarray : distance array per label.
+        verbose: bool : display log option.
+    """
     numvox = np.count_nonzero(img)
     result["voxel_nbr"] = numvox
     result["lung_pixels"] = np.count_nonzero(mask)
     if verbose:
         print('Number of voxel containing vessles: ', numvox)
 
-def distance(seg, verbose=False):
-    #  compute distance map
-    if verbose:
-        print("computing distance map...")
-    # distance_map = seg
-    # skeleton = deepcopy(distance_map)
-    # for i, slice in enumerate(distance_map):
-    #     distance_map[i] = ndi.distance_transform_edt(seg[i])
-        #skeleton[i] = skeletonize(seg[i])
-    distance_map = ndi.distance_transform_edt(seg)
-    if verbose:
-        plt.imshow(distance_map[185])
-    return distance_map 
-
-
-def label_value(dist):
-    label_map, label_nbr = label(dist, return_num=True)
-    print(label_nbr, flush=True)
-    label_nbr = int(label_nbr / 4)
-    label_map = label_map.flatten()[label_nbr:]
-    flat_dist = dist.flatten()[label_nbr:]
-    dist_per_label = np.array([np.where(label_map == n, 
-        label_map, flat_dist) for n in range(1, label_nbr )]) 
-    print("after the for in label_value\n", flush=True)
-
-    f_mean = lambda x : x.mean();
-    mean_ = f_mean(dist_per_label);
+    f_mean = np.vectorize(lambda x : x.mean() if x.any() else None)
+    mean_ = f_mean(dist_per_label)
+    print(type(mean_), mean_.dtype)
+    mean_ = mean_[~np.isnan(mean_.astype(np.float64))] #remove the Nones
     print("mean", flush=True)
-    f_max = lambda x : x.max();
-    max_ = f_max(dist_per_label);
-    f_min = lambda x : x.min();
-    min_ = f_min(dist_per_label);
-    print("max min", flush=True)
-    result["mean_mean_all_vessel"] = mean_.mean()
-    result["std_deviation"] = np.std(mean_)
-    result["max_max_all_vessel"] = max_.max()
-    result["mean_max_all_vessel"] = max_.mean()
+    f_max = np.vectorize(lambda x : x.max() if x.any() else None)
+    max_ = f_max(dist_per_label)
+    max_ = max_[~np.isnan(max_.astype(np.float64))] #remove the Nones
+
+    print(mean_)
+    result["mean_mean_all_vessel"] = mean_.mean() if mean_.any() else None
+    result["std_deviation"] = np.std(mean_) if mean_.any() else None
+    result["max_max_all_vessel"] = max_.max() if max_.any() else None
+    result["min_max_all_vessel"] = max_.min() if max_.any() else None
+    result["mean_max_all_vessel"] = max_.mean() if max_.any() else None
     result["mean_all_vessel"] = mean_
     print("most computations are done\n", flush=True)
     result["max_all_vessel"] = max_
-    result["min_all_vessel"] = min_
-    result["component_count"] = label_nbr
-    return mean_, max_
-
