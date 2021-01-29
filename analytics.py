@@ -37,7 +37,7 @@ def label_value(dist):
 
     print(label_nbr, flush=True)
     label_map = label_map.flatten()
-    dist_size = int(len(label_map) / 1000)
+    dist_size = int(len(label_map) / 10000)
     print("dist_size", dist_size)
 
     dist = dist.flatten()
@@ -49,11 +49,11 @@ def label_value(dist):
             k = int(k)
             if k == 0: # not a valid label
                 continue
-            sub =  np.where(label_map_i == k, flat_dist_i, label_map_i)
+            #sub =  np.where(label_map_i == k, label_map_i * 0, flat_dist_i )
+            sub = flat_dist_i[(label_map_i == k)]
             dist_per_label[k] += list(sub) # append labels to list 
 
     dist_per_label = np.array([np.array(x, dtype=np.float64) for x in dist_per_label], dtype=object)
-    print(dist_per_label[-1], "\n")
     print("after the for in label_value\n", flush=True)
     return dist_per_label
 
@@ -75,14 +75,10 @@ def get_analytics(img, mask, dist_per_label, verbose=False):
 
     f_mean = np.vectorize(lambda x : x.mean() if x.any() else None)
     mean_ = f_mean(dist_per_label)
-    print(type(mean_), mean_.dtype)
     mean_ = mean_[~np.isnan(mean_.astype(np.float64))] #remove the Nones
-    print("mean", flush=True)
     f_max = np.vectorize(lambda x : x.max() if x.any() else None)
     max_ = f_max(dist_per_label)
     max_ = max_[~np.isnan(max_.astype(np.float64))] #remove the Nones
-
-    print(mean_)
     result["mean_mean_all_vessel"] = mean_.mean() if mean_.any() else None
     result["std_deviation"] = np.std(mean_) if mean_.any() else None
     result["max_max_all_vessel"] = max_.max() if max_.any() else None
