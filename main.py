@@ -64,11 +64,11 @@ def main(filepath, maskpath):
     seg = apply_mask(seg, img_mask)
     seg_2d = binarize(seg, img_mask)
     print("End of slice processing\n", flush=True) 
-    distance_map = analytics.distance(seg_2d)
+    distance_map, skel = analytics.distance(seg_2d)
     print("distance\n", flush=True)
-    dist_per_label = analytics.label_value(distance_map)
+    dist_per_label , skel= analytics.label_value(distance_map, skel)
     print("label_value\n", flush=True) 
-    analytics.get_analytics(seg, img_mask, dist_per_label, verbose=True)
+    analytics.get_analytics(seg, img_mask, dist_per_label, skel, verbose=True)
     print("got analytics\n", flush=True)
 
 

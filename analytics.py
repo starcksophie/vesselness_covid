@@ -9,21 +9,21 @@ global result
 def distance(seg, verbose=False):
     """
     Computes the distance map of a segmentation.
-    
+
     seg: numpy.ndarray : segmented array
     verbose: bool : display log option.
 
     return: numpy.ndarray : a distance map.
     """
-    #  compute distance map
     if verbose:
         print("computing distance map...")
     distance_map = ndi.distance_transform_edt(seg)
+    skel = skeletonize(seg)
     if verbose:
         plt.imshow(distance_map[185])
-    return distance_map
+    return distance_map, skel
 
-def label_value(dist):
+def label_value(dist, skel):
     """
         Aggregates distances for each label.
 
@@ -37,6 +37,7 @@ def label_value(dist):
 
     print(label_nbr, flush=True)
     label_map = label_map.flatten()
+    skel = skel.flatten()
     dist_size = int(len(label_map) / 10000)
     print("dist_size", dist_size)
 
@@ -46,19 +47,20 @@ def label_value(dist):
         label_map_i = label_map[i:i + dist_size]
         flat_dist_i = dist[i : i + dist_size]
         for k in np.unique(label_map_i): 
-            k = int(k)
             if k == 0: # not a valid label
                 continue
             #sub =  np.where(label_map_i == k, label_map_i * 0, flat_dist_i )
             sub = flat_dist_i[(label_map_i == k)]
             dist_per_label[k] += list(sub) # append labels to list 
-
+    print(dist_per_label[4])
+    #skel = np.array([dist[((skel != 0) & (label_map == i))]for i in range(label_nbr +1)])
+    result["min_all_vessel"] = np.array(min_all_vessel)
     dist_per_label = np.array([np.array(x, dtype=np.float64) for x in dist_per_label], dtype=object)
     print("after the for in label_value\n", flush=True)
-    return dist_per_label
+    return skel, dist_per_label
 
 
-def get_analytics(img, mask, dist_per_label, verbose=False):
+def get_analytics(img, mask, dist_per_label, skel, verbose=False):
     """
         Computes the metrics on all the labels, and fills the result array.
 
